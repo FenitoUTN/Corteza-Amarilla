@@ -1,863 +1,702 @@
-import { useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corteza Amarilla — Sistema de Control</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080601;--sur:#110e02;--card:#1a1602;
+  --gold:#d4af37;--goldD:rgba(212,175,55,0.55);--goldF:rgba(212,175,55,0.13);
+  --brd:rgba(212,175,55,0.2);--txt:#f0e6c0;--txtD:rgba(240,230,192,0.5);
+  --green:#4caf50;--red:#e53935;--blue:#42a5f5;--orange:#ff9800;
+}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+input:focus,select:focus{outline:1px solid var(--gold)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--sur)}
+::-webkit-scrollbar-thumb{background:rgba(212,175,55,0.3);border-radius:3px}
 
-// ────────────────────────────────────────────────────────────
-// CONSTANTES
-// ────────────────────────────────────────────────────────────
-const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-const DIAS_SEMANA = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-const PASS = "corteza2024";
+/* ── UTILIDADES ── */
+.btn{padding:9px 18px;border-radius:8px;font-weight:700;font-size:.83rem;letter-spacing:.04em;border:none;transition:all .15s;cursor:pointer}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#b8962e);color:#0a0800}
+.btn-ghost{background:transparent;border:1px solid var(--brd);color:var(--txtD)}
+.btn-sm{padding:7px 12px;font-size:.78rem}
+.inp{padding:9px 12px;border-radius:7px;background:var(--card);border:1px solid var(--brd);color:var(--txt);font-size:.85rem;width:100%}
+.card{background:var(--card);border:1px solid var(--brd);border-radius:11px}
+.gold{color:var(--gold)}
+.txt-dim{color:var(--txtD)}
+.hidden{display:none!important}
 
-// Logo del grupo (imagen subida por el usuario)
-const LOGO_SRC = "/mnt/user-data/uploads/IMG_3775-removebg_5.png";
+/* ── LOGIN ── */
+#login-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 35%,#201500 0%,#080601 65%);
+}
+.login-box{
+  width:320px;padding:2.2rem 1.8rem;background:var(--sur);border-radius:20px;
+  border:1px solid rgba(212,175,55,.25);box-shadow:0 0 80px rgba(212,175,55,.1);
+  display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+}
+.login-box h1{color:var(--gold);font-size:1.55rem;font-family:Georgia,serif;letter-spacing:.04em;text-align:center}
+.login-box p.sub{color:var(--goldD);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;text-align:center}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent)}
+.login-box label{color:var(--goldD);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px}
+#login-err{color:var(--red);font-size:.78rem;margin-top:5px;min-height:18px}
 
-// ────────────────────────────────────────────────────────────
-// ESTILOS BASE
-// ────────────────────────────────────────────────────────────
-const C = {
-  gold: "#d4af37",
-  goldDim: "rgba(212,175,55,0.55)",
-  goldFaint: "rgba(212,175,55,0.15)",
-  bg: "#080600",
-  surface: "#100d00",
-  card: "#1a1500",
-  border: "rgba(212,175,55,0.22)",
-  text: "#f0e6c0",
-  textDim: "rgba(240,230,192,0.55)",
-  green: "#4caf50",
-  red: "#e53935",
-  orange: "#ff9800",
-  blue: "#2196f3",
-};
+/* ── APP SHELL ── */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{
+  width:190px;min-height:100%;background:var(--sur);border-right:1px solid var(--brd);
+  display:flex;flex-direction:column;flex-shrink:0;
+}
+.sidebar-head{padding:1.2rem 1rem;border-bottom:1px solid var(--brd);display:flex;flex-direction:column;align-items:center;gap:8px}
+.sidebar-head .name{color:var(--gold);font-weight:700;font-size:.9rem;font-family:Georgia,serif;text-align:center}
+.sidebar-head .sub2{color:var(--goldD);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase}
+nav{flex:1;padding:10px 8px}
+.nav-btn{
+  width:100%;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;
+  background:transparent;border:1px solid transparent;color:var(--txtD);
+  font-size:.85rem;font-weight:400;margin-bottom:3px;text-align:left;transition:all .15s;cursor:pointer;
+}
+.nav-btn.active{background:var(--goldF);border-color:rgba(212,175,55,.25);color:var(--gold);font-weight:700}
+.sidebar-foot{padding:10px 8px;border-top:1px solid var(--brd)}
+#content{flex:1;overflow-y:auto}
+.section{padding:1.5rem;display:none}
+.section.active{display:block}
+.sec-title{color:var(--gold);font-family:Georgia,serif;font-size:1.45rem;margin-bottom:1.2rem}
 
-const btn = (extra={}) => ({
-  padding:"10px 22px", borderRadius:"7px", fontWeight:"bold",
-  fontSize:"0.85rem", letterSpacing:"0.04em", cursor:"pointer",
-  border:"none", transition:"all 0.18s", ...extra
-});
+/* ── CALENDARIO ── */
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:1.1rem;flex-wrap:wrap}
+.cal-month{color:var(--txt);font-size:1.1rem;font-weight:700;font-family:Georgia,serif;min-width:170px;text-align:center}
+.cal-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.cal-legend span{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--txtD)}
+.cal-legend span::before{content:'';width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cal-legend .ens::before{background:var(--blue)}
+.cal-legend .pre::before{background:var(--gold)}
+.cal-legend .otr::before{background:var(--green)}
+.cal-grid-wrap{background:var(--card);border-radius:10px;border:1px solid var(--brd);overflow:hidden}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--sur)}
+.cal-header div{padding:8px;text-align:center;color:var(--goldD);font-size:.72rem;font-weight:700;letter-spacing:.08em}
+.cal-body{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{min-height:74px;padding:5px;border-top:1px solid rgba(212,175,55,.1);cursor:pointer;transition:background .12s}
+.cal-cell:hover{background:rgba(212,175,55,.06)}
+.cal-cell.today{background:rgba(212,175,55,.08)}
+.cal-cell .day-num{
+  color:var(--txt);font-size:.85rem;margin-bottom:3px;
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+}
+.cal-cell.today .day-num{background:rgba(212,175,55,.25);color:var(--gold);font-weight:700}
+.ev-chip{font-size:.62rem;padding:2px 4px;border-radius:3px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-chip.ensayo{background:rgba(66,165,245,.15);color:var(--blue)}
+.ev-chip.presentacion{background:rgba(212,175,55,.18);color:var(--gold)}
+.ev-chip.otro{background:rgba(76,175,80,.15);color:var(--green)}
 
-// ────────────────────────────────────────────────────────────
-// LOGIN
-// ────────────────────────────────────────────────────────────
-function Login({ onLogin }) {
-  const [pass, setPass] = useState("");
-  const [err, setErr] = useState("");
+/* ── MODAL ── */
+.modal-bg{
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem;
+}
+.modal-box{
+  width:400px;max-width:100%;background:var(--card);border-radius:14px;
+  border:1px solid var(--brd);padding:1.5rem;box-shadow:0 0 50px rgba(0,0,0,.6);
+}
+.modal-box h3{color:var(--gold);font-family:Georgia,serif;margin-bottom:1rem}
+.ev-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:7px;
+}
+.ev-item.ensayo{background:rgba(66,165,245,.1);border:1px solid rgba(66,165,245,.25)}
+.ev-item.presentacion{background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25)}
+.ev-item.otro{background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.25)}
+.ev-item .ev-tipo{font-size:.75rem;font-weight:700}
+.ev-item.ensayo .ev-tipo{color:var(--blue)}
+.ev-item.presentacion .ev-tipo{color:var(--gold)}
+.ev-item.otro .ev-tipo{color:var(--green)}
+.ev-item .ev-desc{font-size:.85rem;color:var(--txt)}
+.ev-item .del-btn{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 6px;margin-left:auto}
+.modal-divider{height:1px;background:var(--brd);margin:10px 0}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.form-label{color:var(--goldD);font-size:.73rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.btn-row{display:flex;gap:7px}
 
-  const tryLogin = () => {
-    if (pass === PASS) { onLogin(); }
-    else { setErr("Contraseña incorrecta"); }
-  };
+/* ── BIBLIOTECA ── */
+.lib-wrap{display:grid;grid-template-columns:230px 1fr;gap:1.2rem}
+.block-list{}
+.block-item{
+  padding:9px 12px;border-radius:8px;margin-bottom:5px;
+  background:var(--card);border:1px solid var(--brd);
+  cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;
+}
+.block-item.active{background:var(--goldF);border-color:rgba(212,175,55,.3);color:var(--gold)}
+.block-item .b-name{font-weight:700;font-size:.85rem}
+.block-item .b-cnt{color:var(--txtD);font-size:.72rem}
+.song-item{
+  background:var(--card);border:1px solid var(--brd);border-radius:9px;
+  padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:7px;
+}
+.song-num{
+  width:30px;height:30px;border-radius:50%;background:var(--goldF);
+  border:1px solid rgba(212,175,55,.25);display:flex;align-items:center;justify-content:center;
+  color:var(--gold);font-weight:700;font-size:.85rem;flex-shrink:0;
+}
+.song-title{color:var(--txt);font-weight:700;font-size:.9rem}
+.song-meta{color:var(--txtD);font-size:.75rem;margin-top:2px}
+.lib-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:var(--txtD);gap:8px}
+.lib-empty .big{font-size:2.5rem}
+.song-form{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:1.1rem;margin-bottom:1rem}
 
-  return (
-    <div style={{
-      minHeight:"100vh", background:C.bg,
-      display:"flex", alignItems:"center", justifyContent:"center",
-      backgroundImage:"radial-gradient(ellipse at 50% 40%, #1f1500 0%, #080600 65%)",
-    }}>
-      <div style={{
-        width:"340px", padding:"2.5rem 2rem",
-        background:C.surface, borderRadius:"20px",
-        border:`1px solid ${C.border}`,
-        boxShadow:"0 0 80px rgba(212,175,55,0.12)",
-        display:"flex", flexDirection:"column", alignItems:"center", gap:"1.4rem",
-      }}>
-        {/* Logo */}
-        <div style={{
-          width:"150px", height:"150px", borderRadius:"50%",
-          background:"radial-gradient(circle, #1a1200, #0a0a00)",
-          border:`2px solid ${C.gold}44`,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          overflow:"hidden",
-          boxShadow:`0 0 40px ${C.gold}33`
-        }}>
-          <img src={LOGO_SRC} alt="Corteza Amarilla"
-            style={{width:"140px", height:"140px", objectFit:"contain"}}
-            onError={e => { e.target.style.display="none"; }}
-          />
-          {/* Fallback SVG mandala */}
-          <svg viewBox="0 0 100 100" style={{position:"absolute",width:"120px",height:"120px",opacity:0.5}}>
-            <circle cx="50" cy="50" r="40" fill="none" stroke="#d4af37" strokeWidth="1"/>
-            <circle cx="50" cy="50" r="25" fill="none" stroke="#d4af37" strokeWidth="0.8"/>
-            <circle cx="50" cy="50" r="10" fill="#d4af3755" stroke="#d4af37" strokeWidth="1"/>
-            {[0,45,90,135,180,225,270,315].map(a=>(
-              <line key={a}
-                x1={50+25*Math.cos(a*Math.PI/180)} y1={50+25*Math.sin(a*Math.PI/180)}
-                x2={50+40*Math.cos(a*Math.PI/180)} y2={50+40*Math.sin(a*Math.PI/180)}
-                stroke="#d4af37" strokeWidth="1"
-              />
-            ))}
-          </svg>
+/* ── BAILARINES ── */
+.dan-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.2rem}
+.stat-card{background:var(--card);border:1px solid var(--brd);border-radius:9px;padding:14px;text-align:center}
+.stat-num{font-size:1.8rem;font-weight:700}
+.stat-lbl{color:var(--txtD);font-size:.75rem;margin-top:2px}
+.dancers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.dancer-card{background:var(--card);border:1px solid var(--brd);border-radius:11px;padding:14px}
+.dancer-name{color:var(--txt);font-weight:700;font-size:.9rem;margin-bottom:4px}
+.rol-badge{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:.06em;display:inline-block;margin-bottom:8px}
+.dancer-info{color:var(--txtD);font-size:.78rem;margin-bottom:2px}
+.dancer-actions{display:flex;gap:4px;float:right}
+.dancer-actions button{background:transparent;border:none;cursor:pointer;font-size:.85rem;padding:0 4px}
+.dan-form{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem}
+
+/* ── MENSUALIDADES ── */
+.fee-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.2rem}
+.fee-table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{padding:9px 5px;text-align:center;color:var(--goldD);font-size:.68rem;letter-spacing:.08em;background:var(--card);border-bottom:1px solid var(--brd)}
+th.name-col{padding:9px 12px;text-align:left;position:sticky;left:0;z-index:2}
+td{padding:8px 3px;text-align:center;border-bottom:1px solid rgba(212,175,55,.08)}
+td.name-cell{padding:9px 12px;color:var(--txt);font-weight:700;font-size:.85rem;text-align:left;position:sticky;left:0;z-index:1}
+.fee-cell{cursor:pointer;font-size:.9rem;transition:background .12s;border-radius:4px}
+.fee-cell:hover{background:rgba(212,175,55,.08)}
+.total-badge{padding:3px 9px;border-radius:20px;font-size:.75rem;font-weight:700}
+
+/* ── MANDALA SVG ── */
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 14px rgba(212,175,55,.5))}50%{filter:drop-shadow(0 0 28px rgba(212,175,55,.85))}}
+.mandala-anim{animation:glow 3s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ LOGIN ════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <svg class="mandala-anim" viewBox="0 0 100 100" width="120" height="120">
+      <circle cx="50" cy="50" r="45" fill="#1a1200" stroke="#d4af37" stroke-width="0.8" opacity="0.9"/>
+      <circle cx="50" cy="50" r="32" fill="none" stroke="#d4af37" stroke-width="0.6"/>
+      <circle cx="50" cy="50" r="18" fill="rgba(212,175,55,.13)" stroke="#d4af37" stroke-width="1"/>
+      <circle cx="50" cy="50" r="8" fill="#d4af37" stroke="#1a1200" stroke-width="1"/>
+      <line x1="50" y1="32" x2="50" y2="18" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="50" y1="68" x2="50" y2="82" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="32" y1="50" x2="18" y2="50" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="68" y1="50" x2="82" y2="50" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="61.3" y1="38.7" x2="72.7" y2="27.3" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="38.7" y1="61.3" x2="27.3" y2="72.7" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="61.3" y1="61.3" x2="72.7" y2="72.7" stroke="#d4af37" stroke-width="1.2"/>
+      <line x1="38.7" y1="38.7" x2="27.3" y2="27.3" stroke="#d4af37" stroke-width="1.2"/>
+      <circle cx="50" cy="18" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="50" cy="82" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="18" cy="50" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="82" cy="50" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="27.3" cy="27.3" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="72.7" cy="72.7" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="27.3" cy="72.7" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="72.7" cy="27.3" r="4" fill="#ffd700" opacity="0.9"/>
+      <circle cx="50" cy="32" r="3.5" fill="#4caf50" opacity="0.9"/>
+      <circle cx="50" cy="68" r="3.5" fill="#ff9800" opacity="0.9"/>
+      <circle cx="32" cy="50" r="3.5" fill="#d4af37" opacity="0.9"/>
+      <circle cx="68" cy="50" r="3.5" fill="#5c6bc0" opacity="0.9"/>
+      <circle cx="61.3" cy="38.7" r="3.5" fill="#4caf50" opacity="0.9"/>
+      <circle cx="38.7" cy="61.3" r="3.5" fill="#ff9800" opacity="0.9"/>
+      <circle cx="61.3" cy="61.3" r="3.5" fill="#d4af37" opacity="0.9"/>
+      <circle cx="38.7" cy="38.7" r="3.5" fill="#5c6bc0" opacity="0.9"/>
+    </svg>
+    <h1>Corteza Amarilla</h1>
+    <p class="sub">Grupo de Folclor</p>
+    <div class="divider"></div>
+    <div style="width:100%">
+      <label>Contraseña</label>
+      <input class="inp" type="password" id="pw-input" placeholder="••••••••" style="font-size:1rem;padding:11px 14px">
+      <p id="login-err"></p>
+    </div>
+    <button class="btn btn-gold" style="width:100%;padding:12px" onclick="doLogin()">Ingresar</button>
+    <p class="txt-dim" style="font-size:.7rem;text-align:center">Contraseña: corteza2024</p>
+  </div>
+</div>
+
+<!-- ════════════════ APP ════════════════ -->
+<div id="app" class="hidden">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-head">
+      <svg viewBox="0 0 100 100" width="50" height="50">
+        <circle cx="50" cy="50" r="45" fill="#1a1200" stroke="#d4af37" stroke-width="1.2"/>
+        <circle cx="50" cy="50" r="28" fill="none" stroke="#d4af37" stroke-width="0.7"/>
+        <circle cx="50" cy="50" r="8" fill="#d4af37"/>
+        <line x1="50" y1="22" x2="50" y2="8" stroke="#d4af37" stroke-width="1.5"/>
+        <line x1="50" y1="78" x2="50" y2="92" stroke="#d4af37" stroke-width="1.5"/>
+        <line x1="22" y1="50" x2="8" y2="50" stroke="#d4af37" stroke-width="1.5"/>
+        <line x1="78" y1="50" x2="92" y2="50" stroke="#d4af37" stroke-width="1.5"/>
+      </svg>
+      <div class="name">Corteza Amarilla</div>
+      <div class="sub2">Folclor CR</div>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showSection('cal',this)"><span>📅</span> Calendario</button>
+      <button class="nav-btn" onclick="showSection('lib',this)"><span>🎵</span> Biblioteca</button>
+      <button class="nav-btn" onclick="showSection('dan',this)"><span>💃</span> Bailarines</button>
+      <button class="nav-btn" onclick="showSection('fee',this)"><span>💰</span> Mensualidades</button>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="btn btn-ghost" style="width:100%;padding:9px" onclick="doLogout()">🚪 Salir</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- ── CALENDARIO ── -->
+    <div id="sec-cal" class="section active">
+      <h2 class="sec-title">📅 Calendario</h2>
+      <div class="cal-nav">
+        <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹</button>
+        <span class="cal-month" id="cal-title">Mayo 2025</span>
+        <button class="btn btn-ghost btn-sm" onclick="calNext()">›</button>
+        <button class="btn btn-ghost btn-sm" onclick="calToday()" style="margin-left:auto">Hoy</button>
+      </div>
+      <div class="cal-legend">
+        <span class="ens">Ensayo</span>
+        <span class="pre">Presentación</span>
+        <span class="otr">Otro</span>
+      </div>
+      <div class="cal-grid-wrap">
+        <div class="cal-header">
+          <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
         </div>
-
-        <div style={{textAlign:"center"}}>
-          <h1 style={{color:C.gold, margin:0, fontSize:"1.6rem", fontFamily:"Georgia,serif", letterSpacing:"0.04em"}}>Corteza Amarilla</h1>
-          <p style={{color:C.goldDim, margin:"4px 0 0", fontSize:"0.78rem", letterSpacing:"0.18em", textTransform:"uppercase"}}>Grupo de Folclor</p>
-        </div>
-
-        <div style={{width:"100%", height:"1px", background:`linear-gradient(90deg,transparent,${C.gold}44,transparent)`}}/>
-
-        <div style={{width:"100%"}}>
-          <label style={{color:C.goldDim, fontSize:"0.75rem", letterSpacing:"0.1em", textTransform:"uppercase", display:"block", marginBottom:"7px"}}>Contraseña</label>
-          <input type="password" value={pass}
-            onChange={e=>{setPass(e.target.value);setErr("");}}
-            onKeyDown={e=>e.key==="Enter"&&tryLogin()}
-            placeholder="••••••••"
-            style={{width:"100%",padding:"11px 14px",borderRadius:"8px",
-              background:C.goldFaint,border:`1px solid ${C.border}`,
-              color:C.text,fontSize:"1rem",outline:"none",boxSizing:"border-box"}}
-          />
-          {err && <p style={{color:C.red,fontSize:"0.8rem",margin:"5px 0 0"}}>{err}</p>}
-        </div>
-
-        <button onClick={tryLogin} style={btn({
-          width:"100%", background:`linear-gradient(135deg,${C.gold},#b8962e)`,
-          color:"#0a0800", padding:"13px",
-          boxShadow:`0 4px 22px ${C.gold}33`
-        })}>
-          Ingresar al Sistema
-        </button>
-
-        <p style={{color:"rgba(255,255,255,0.18)", fontSize:"0.72rem", margin:0}}>
-          Contraseña por defecto: <span style={{color:C.goldDim}}>corteza2024</span>
-        </p>
+        <div class="cal-body" id="cal-body"></div>
       </div>
     </div>
-  );
-}
 
-// ────────────────────────────────────────────────────────────
-// NAV SIDEBAR
-// ────────────────────────────────────────────────────────────
-function Sidebar({ active, setActive, onLogout }) {
-  const items = [
-    {id:"calendar", icon:"📅", label:"Calendario"},
-    {id:"library", icon:"🎵", label:"Biblioteca"},
-    {id:"dancers", icon:"💃", label:"Bailarines"},
-    {id:"fees", icon:"💰", label:"Mensualidades"},
-  ];
-  return (
-    <div style={{
-      width:"220px", minHeight:"100vh", background:C.surface,
-      borderRight:`1px solid ${C.border}`,
-      display:"flex", flexDirection:"column",
-      padding:"0",
-    }}>
-      {/* Logo header */}
-      <div style={{
-        padding:"1.5rem 1.2rem 1.2rem",
-        borderBottom:`1px solid ${C.border}`,
-        display:"flex", flexDirection:"column", alignItems:"center", gap:"10px"
-      }}>
-        <img src={LOGO_SRC} alt="CA" style={{width:"55px",height:"55px",objectFit:"contain"}}
-          onError={e=>e.target.style.display="none"}
-        />
-        <div style={{textAlign:"center"}}>
-          <div style={{color:C.gold, fontWeight:"bold", fontSize:"1rem", fontFamily:"Georgia,serif"}}>Corteza Amarilla</div>
-          <div style={{color:C.goldDim, fontSize:"0.7rem", letterSpacing:"0.12em", textTransform:"uppercase"}}>Folclor</div>
-        </div>
-      </div>
-
-      {/* Nav items */}
-      <nav style={{flex:1, padding:"1rem 0.6rem"}}>
-        {items.map(it=>(
-          <button key={it.id} onClick={()=>setActive(it.id)} style={{
-            width:"100%", padding:"11px 14px",
-            borderRadius:"9px", display:"flex", alignItems:"center", gap:"12px",
-            background:active===it.id ? C.goldFaint : "transparent",
-            border:active===it.id ? `1px solid ${C.gold}44` : "1px solid transparent",
-            color:active===it.id ? C.gold : C.textDim,
-            cursor:"pointer", fontSize:"0.9rem", fontWeight:active===it.id?"bold":"normal",
-            marginBottom:"4px", textAlign:"left", transition:"all 0.15s"
-          }}>
-            <span style={{fontSize:"1.1rem"}}>{it.icon}</span>
-            {it.label}
-          </button>
-        ))}
-      </nav>
-
-      {/* Logout */}
-      <div style={{padding:"1rem 0.6rem", borderTop:`1px solid ${C.border}`}}>
-        <button onClick={onLogout} style={btn({
-          width:"100%", background:"transparent",
-          border:`1px solid ${C.border}`, color:C.textDim,
-          padding:"10px",
-        })}>
-          🚪 Salir
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// SECCIÓN: CALENDARIO
-// ────────────────────────────────────────────────────────────
-function CalendarSection({ data, setData }) {
-  const hoy = new Date();
-  const [year, setYear] = useState(hoy.getFullYear());
-  const [month, setMonth] = useState(hoy.getMonth());
-  const [modal, setModal] = useState(null); // {date, events}
-  const [form, setForm] = useState({tipo:"ensayo", desc:"", hora:"19:00"});
-
-  const events = data.events || {};
-
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-
-  const getKey = (y,m,d) => `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-  const todayKey = getKey(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-
-  const addEvent = () => {
-    if (!form.desc.trim()) return;
-    const key = modal.date;
-    const newEvents = {...events, [key]: [...(events[key]||[]), {...form, id:Date.now()}]};
-    setData({...data, events:newEvents});
-    setForm({tipo:"ensayo", desc:"", hora:"19:00"});
-  };
-
-  const delEvent = (key, id) => {
-    const newList = (events[key]||[]).filter(e=>e.id!==id);
-    const newEvents = {...events};
-    if (newList.length===0) delete newEvents[key];
-    else newEvents[key]=newList;
-    setData({...data, events:newEvents});
-  };
-
-  const typeColor = t => t==="ensayo" ? C.blue : t==="presentacion" ? C.gold : C.green;
-  const typeLabel = t => t==="ensayo"?"Ensayo":t==="presentacion"?"Presentación":"Otro";
-
-  return (
-    <div style={{padding:"2rem", flex:1}}>
-      <h2 style={{color:C.gold, margin:"0 0 1.5rem", fontFamily:"Georgia,serif", fontSize:"1.6rem"}}>📅 Calendario</h2>
-
-      {/* Navegación de mes */}
-      <div style={{display:"flex", alignItems:"center", gap:"1rem", marginBottom:"1.5rem"}}>
-        <button onClick={()=>{if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1);}} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold})}>‹</button>
-        <span style={{color:C.text, fontSize:"1.2rem", fontWeight:"bold", minWidth:"180px", textAlign:"center", fontFamily:"Georgia,serif"}}>
-          {MESES[month]} {year}
-        </span>
-        <button onClick={()=>{if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1);}} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold})}>›</button>
-        <button onClick={()=>{setMonth(hoy.getMonth());setYear(hoy.getFullYear());}} style={btn({background:"transparent",border:`1px solid ${C.border}`,color:C.textDim,marginLeft:"auto"})}>Hoy</button>
-      </div>
-
-      {/* Leyenda */}
-      <div style={{display:"flex",gap:"1.2rem",marginBottom:"1rem"}}>
-        {[["ensayo","Ensayo"],["presentacion","Presentación"],["otro","Otro"]].map(([t,l])=>(
-          <div key={t} style={{display:"flex",alignItems:"center",gap:"6px"}}>
-            <div style={{width:"10px",height:"10px",borderRadius:"50%",background:typeColor(t)}}/>
-            <span style={{color:C.textDim,fontSize:"0.8rem"}}>{l}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Grid de días */}
-      <div style={{background:C.card, borderRadius:"12px", border:`1px solid ${C.border}`, overflow:"hidden"}}>
-        {/* Header días */}
-        <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", background:C.surface}}>
-          {DIAS_SEMANA.map(d=>(
-            <div key={d} style={{padding:"10px", textAlign:"center", color:C.goldDim, fontSize:"0.78rem", fontWeight:"bold", letterSpacing:"0.08em"}}>{d}</div>
-          ))}
-        </div>
-        {/* Celdas */}
-        <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)"}}>
-          {Array(firstDay).fill(null).map((_,i)=>(
-            <div key={`e${i}`} style={{minHeight:"80px", padding:"6px", borderTop:`1px solid ${C.border}11`}}/>
-          ))}
-          {Array(daysInMonth).fill(null).map((_,i)=>{
-            const d = i+1;
-            const key = getKey(year,month,d);
-            const evs = events[key]||[];
-            const isToday = key===todayKey;
-            return (
-              <div key={d}
-                onClick={()=>setModal({date:key,day:d})}
-                style={{
-                  minHeight:"80px", padding:"6px",
-                  borderTop:`1px solid ${C.border}22`,
-                  cursor:"pointer",
-                  background:isToday ? `${C.gold}11` : "transparent",
-                  transition:"background 0.15s"
-                }}
-              >
-                <div style={{
-                  color:isToday?C.gold:C.text,
-                  fontWeight:isToday?"bold":"normal",
-                  fontSize:"0.88rem", marginBottom:"4px",
-                  width:"24px",height:"24px",
-                  borderRadius:"50%",
-                  background:isToday?`${C.gold}33`:"transparent",
-                  display:"flex",alignItems:"center",justifyContent:"center"
-                }}>{d}</div>
-                {evs.slice(0,3).map((ev,ei)=>(
-                  <div key={ei} style={{
-                    fontSize:"0.68rem", padding:"2px 5px", borderRadius:"4px",
-                    background:`${typeColor(ev.tipo)}22`,
-                    color:typeColor(ev.tipo),
-                    marginBottom:"2px", whiteSpace:"nowrap",
-                    overflow:"hidden", textOverflow:"ellipsis"
-                  }}>{ev.hora} {ev.desc}</div>
-                ))}
-                {evs.length>3&&<div style={{fontSize:"0.65rem",color:C.goldDim}}>+{evs.length-3} más</div>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Modal */}
-      {modal && (
-        <div style={{
-          position:"fixed",top:0,left:0,right:0,bottom:0,
-          background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000
-        }} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
-          <div style={{
-            width:"420px",maxWidth:"95vw",background:C.card,borderRadius:"16px",
-            border:`1px solid ${C.border}`,padding:"1.8rem",
-            boxShadow:`0 0 60px rgba(0,0,0,0.6)`
-          }}>
-            <h3 style={{color:C.gold,margin:"0 0 1.2rem",fontFamily:"Georgia,serif"}}>
-              {modal.day} de {MESES[month]}, {year}
-            </h3>
-
-            {/* Eventos existentes */}
-            {(events[modal.date]||[]).length===0 && (
-              <p style={{color:C.textDim,fontSize:"0.85rem"}}>Sin eventos programados</p>
-            )}
-            {(events[modal.date]||[]).map(ev=>(
-              <div key={ev.id} style={{
-                display:"flex",alignItems:"center",gap:"10px",
-                padding:"8px 12px",borderRadius:"8px",
-                background:`${typeColor(ev.tipo)}15`,
-                border:`1px solid ${typeColor(ev.tipo)}44`,
-                marginBottom:"8px"
-              }}>
-                <div style={{flex:1}}>
-                  <span style={{color:typeColor(ev.tipo),fontSize:"0.78rem",fontWeight:"bold"}}>{typeLabel(ev.tipo)} {ev.hora}</span>
-                  <div style={{color:C.text,fontSize:"0.88rem"}}>{ev.desc}</div>
-                </div>
-                <button onClick={()=>delEvent(modal.date,ev.id)} style={{...btn({background:"transparent",border:"none",color:C.red,padding:"4px 8px",fontSize:"1rem"})}}>✕</button>
-              </div>
-            ))}
-
-            <div style={{height:"1px",background:C.border,margin:"1rem 0"}}/>
-            <p style={{color:C.goldDim,fontSize:"0.8rem",margin:"0 0 10px",textTransform:"uppercase",letterSpacing:"0.1em"}}>Agregar evento</p>
-
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
-              <select value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}
-                style={{padding:"9px 10px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}>
-                <option value="ensayo">🎭 Ensayo</option>
-                <option value="presentacion">🌟 Presentación</option>
-                <option value="otro">📌 Otro</option>
-              </select>
-              <input type="time" value={form.hora} onChange={e=>setForm({...form,hora:e.target.value})}
-                style={{padding:"9px 10px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-              />
-            </div>
-            <input value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}
-              onKeyDown={e=>e.key==="Enter"&&addEvent()}
-              placeholder="Descripción del evento..."
-              style={{width:"100%",padding:"9px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem",boxSizing:"border-box",marginBottom:"10px"}}
-            />
-            <div style={{display:"flex",gap:"8px"}}>
-              <button onClick={addEvent} style={btn({background:`linear-gradient(135deg,${C.gold},#b8962e)`,color:"#0a0800",flex:1})}>+ Agregar</button>
-              <button onClick={()=>setModal(null)} style={btn({background:"transparent",border:`1px solid ${C.border}`,color:C.textDim})}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// SECCIÓN: BIBLIOTECA
-// ────────────────────────────────────────────────────────────
-function LibrarySection({ data, setData }) {
-  const [selBlock, setSelBlock] = useState(null);
-  const [newBlock, setNewBlock] = useState("");
-  const [newSong, setNewSong] = useState({titulo:"",artista:"",duracion:"",notas:""});
-  const [showSongForm, setShowSongForm] = useState(false);
-
-  const blocks = data.blocks || [];
-
-  const addBlock = () => {
-    if (!newBlock.trim()) return;
-    setData({...data, blocks:[...blocks,{id:Date.now(),nombre:newBlock.trim(),canciones:[]}]});
-    setNewBlock("");
-  };
-
-  const delBlock = (id) => {
-    setData({...data, blocks:blocks.filter(b=>b.id!==id)});
-    if (selBlock===id) setSelBlock(null);
-  };
-
-  const addSong = () => {
-    if (!newSong.titulo.trim()) return;
-    const updated = blocks.map(b=> b.id===selBlock
-      ? {...b, canciones:[...b.canciones,{...newSong,id:Date.now()}]}
-      : b
-    );
-    setData({...data, blocks:updated});
-    setNewSong({titulo:"",artista:"",duracion:"",notas:""});
-    setShowSongForm(false);
-  };
-
-  const delSong = (blockId, songId) => {
-    const updated = blocks.map(b=> b.id===blockId
-      ? {...b, canciones:b.canciones.filter(s=>s.id!==songId)}
-      : b
-    );
-    setData({...data, blocks:updated});
-  };
-
-  const current = blocks.find(b=>b.id===selBlock);
-
-  return (
-    <div style={{padding:"2rem", flex:1, display:"flex", flexDirection:"column", gap:"1.5rem"}}>
-      <h2 style={{color:C.gold, margin:0, fontFamily:"Georgia,serif", fontSize:"1.6rem"}}>🎵 Biblioteca Musical</h2>
-
-      <div style={{display:"grid", gridTemplateColumns:"260px 1fr", gap:"1.5rem", flex:1}}>
-        {/* Lista de bloques */}
+    <!-- ── BIBLIOTECA ── -->
+    <div id="sec-lib" class="section">
+      <h2 class="sec-title">🎵 Biblioteca Musical</h2>
+      <div class="lib-wrap">
         <div>
-          <p style={{color:C.goldDim,fontSize:"0.78rem",letterSpacing:"0.1em",textTransform:"uppercase",margin:"0 0 10px"}}>Bloques de Baile</p>
-          <div style={{display:"flex",gap:"6px",marginBottom:"10px"}}>
-            <input value={newBlock} onChange={e=>setNewBlock(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&addBlock()}
-              placeholder="Nuevo bloque..."
-              style={{flex:1,padding:"8px 10px",borderRadius:"7px",background:C.card,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-            />
-            <button onClick={addBlock} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold,padding:"8px 12px"})}>+</button>
+          <p class="form-label">Bloques de baile</p>
+          <div style="display:flex;gap:5px;margin-bottom:8px">
+            <input class="inp" id="nb-input" placeholder="Nuevo bloque..." style="font-size:.82rem" onkeydown="if(event.key==='Enter')addBlock()">
+            <button class="btn btn-ghost btn-sm" onclick="addBlock()" style="flex-shrink:0">+</button>
           </div>
-          {blocks.length===0 && <p style={{color:C.textDim,fontSize:"0.82rem"}}>Sin bloques. Agrega uno.</p>}
-          {blocks.map(b=>(
-            <div key={b.id} onClick={()=>setSelBlock(b.id)} style={{
-              padding:"10px 14px", borderRadius:"9px", marginBottom:"6px",
-              background:selBlock===b.id ? C.goldFaint : C.card,
-              border:`1px solid ${selBlock===b.id?C.gold+"55":C.border}`,
-              cursor:"pointer", display:"flex", alignItems:"center", gap:"8px",
-              transition:"all 0.15s"
-            }}>
-              <span style={{color:C.gold,fontSize:"1.1rem"}}>🎶</span>
-              <div style={{flex:1}}>
-                <div style={{color:selBlock===b.id?C.gold:C.text,fontWeight:"bold",fontSize:"0.88rem"}}>{b.nombre}</div>
-                <div style={{color:C.textDim,fontSize:"0.75rem"}}>{b.canciones.length} canción(es)</div>
-              </div>
-              <button onClick={e=>{e.stopPropagation();delBlock(b.id);}} style={{background:"transparent",border:"none",color:C.textDim,cursor:"pointer",fontSize:"0.9rem",padding:"2px 5px"}}>✕</button>
-            </div>
-          ))}
+          <div id="block-list"></div>
         </div>
+        <div id="song-panel">
+          <div class="lib-empty"><span class="big">🎵</span><p>Selecciona un bloque</p></div>
+        </div>
+      </div>
+    </div>
 
-        {/* Canciones del bloque */}
+    <!-- ── BAILARINES ── -->
+    <div id="sec-dan" class="section">
+      <h2 class="sec-title">💃 Bailarines</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:7px">
+          <input class="inp" id="dan-search" placeholder="Buscar..." style="width:160px;padding:8px 12px;font-size:.82rem" oninput="renderDancers()">
+          <button class="btn btn-gold" onclick="toggleDanForm(true)">+ Agregar</button>
+        </div>
+      </div>
+      <div id="dan-form-wrap" class="dan-form hidden">
+        <h3 class="gold" style="font-size:.95rem;margin-bottom:1rem" id="dan-form-title">Nuevo integrante</h3>
+        <div class="form-row">
+          <input class="inp" id="df-nombre" placeholder="Nombre completo *">
+          <select class="inp" id="df-rol">
+            <option value="bailarín">Bailarín</option>
+            <option value="bailarina">Bailarina</option>
+            <option value="director/a">Director/a</option>
+            <option value="músico">Músico</option>
+            <option value="utilero/a">Utilero/a</option>
+          </select>
+          <input class="inp" id="df-tel" placeholder="Teléfono">
+          <input class="inp" id="df-correo" placeholder="Correo electrónico">
+          <input class="inp" id="df-notas" placeholder="Notas" style="grid-column:span 2">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-gold" onclick="saveDancer()">💾 Guardar</button>
+          <button class="btn btn-ghost" onclick="toggleDanForm(false)">Cancelar</button>
+        </div>
+      </div>
+      <div class="dan-stats" id="dan-stats"></div>
+      <div class="dancers-grid" id="dancers-grid"></div>
+    </div>
+
+    <!-- ── MENSUALIDADES ── -->
+    <div id="sec-fee" class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px">
+        <h2 class="sec-title" style="margin-bottom:0" id="fee-title">💰 Mensualidades 2025</h2>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-ghost btn-sm" onclick="feeYr(-1)">‹</button>
+          <button class="btn btn-ghost btn-sm" onclick="feeYr(1)">›</button>
+        </div>
+      </div>
+      <div class="fee-stats" id="fee-stats"></div>
+      <div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--txtD)">✅ Pagado</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--txtD)">❌ Pendiente</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--txtD)">⭕ Exonerado</span>
+        <span class="txt-dim" style="font-size:.72rem;margin-left:auto">Click en celda para cambiar estado</span>
+      </div>
+      <div class="fee-table-wrap"><div id="fee-table"></div></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ════════════════ MODAL CALENDARIO ════════════════ -->
+<div id="cal-modal" class="modal-bg hidden" onclick="closeCalModal(event)">
+  <div class="modal-box">
+    <h3 id="modal-title">Fecha</h3>
+    <div id="modal-events"></div>
+    <div class="modal-divider"></div>
+    <p class="form-label">Agregar evento</p>
+    <div class="form-row">
+      <select class="inp" id="ev-tipo">
+        <option value="ensayo">🎭 Ensayo</option>
+        <option value="presentacion">🌟 Presentación</option>
+        <option value="otro">📌 Otro</option>
+      </select>
+      <input class="inp" type="time" id="ev-hora" value="19:00">
+    </div>
+    <input class="inp" id="ev-desc" placeholder="Descripción del evento..." style="margin-bottom:10px" onkeydown="if(event.key==='Enter')addCalEvent()">
+    <div class="btn-row">
+      <button class="btn btn-gold" style="flex:1" onclick="addCalEvent()">+ Agregar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('cal-modal').classList.add('hidden')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════ ESTADO ════════
+const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const PASS="corteza2024";
+let D={events:{},blocks:[],dancers:[],fees:{},montoMensual:5000};
+let calY=new Date().getFullYear(),calM=new Date().getMonth();
+let feeY=new Date().getFullYear();
+let selBlock=null,editDancerId=null,modalDate=null;
+const ROLE_COLORS={"bailarín":"#42a5f5","bailarina":"#e91e8c","director/a":"#d4af37","músico":"#4caf50","utilero/a":"#ff9800"};
+
+// ════════ PERSISTENCIA ════════
+function save(){try{localStorage.setItem("ca_data",JSON.stringify(D));}catch(e){}}
+function load(){try{const s=localStorage.getItem("ca_data");if(s)D=JSON.parse(s);}catch(e){}}
+
+// ════════ LOGIN ════════
+document.getElementById("pw-input").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+function doLogin(){
+  const pw=document.getElementById("pw-input").value;
+  if(pw===PASS){
+    load();
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    renderAll();
+  } else {
+    document.getElementById("login-err").textContent="Contraseña incorrecta";
+    setTimeout(()=>document.getElementById("login-err").textContent="",2500);
+  }
+}
+function doLogout(){
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("pw-input").value="";
+}
+
+// ════════ NAV ════════
+function showSection(id,btn){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("sec-"+id).classList.add("active");
+  btn.classList.add("active");
+  if(id==="cal")renderCal();
+  if(id==="lib")renderLib();
+  if(id==="dan")renderDancers();
+  if(id==="fee")renderFee();
+}
+function renderAll(){renderCal();renderLib();renderDancers();renderFee();}
+
+// ════════ CALENDARIO ════════
+function calPrev(){if(calM===0){calM=11;calY--;}else calM--;renderCal();}
+function calNext(){if(calM===11){calM=0;calY++;}else calM++;renderCal();}
+function calToday(){calY=new Date().getFullYear();calM=new Date().getMonth();renderCal();}
+function gkey(y,m,d){return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;}
+const hoy=new Date();
+const todayKey=gkey(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());
+
+function renderCal(){
+  document.getElementById("cal-title").textContent=MESES[calM]+" "+calY;
+  const dim=new Date(calY,calM+1,0).getDate();
+  const fd=new Date(calY,calM,1).getDay();
+  let html="";
+  for(let i=0;i<fd;i++)html+=`<div class="cal-cell" style="cursor:default"></div>`;
+  for(let d=1;d<=dim;d++){
+    const k=gkey(calY,calM,d);
+    const evs=D.events[k]||[];
+    const isT=k===todayKey;
+    let chips="";
+    evs.slice(0,2).forEach(ev=>{
+      chips+=`<div class="ev-chip ${ev.tipo}">${ev.hora} ${ev.desc}</div>`;
+    });
+    if(evs.length>2)chips+=`<div style="font-size:.6rem;color:var(--goldD)">+${evs.length-2} más</div>`;
+    html+=`<div class="cal-cell${isT?" today":""}" onclick="openCalModal('${k}',${d})">
+      <div class="day-num">${d}</div>${chips}
+    </div>`;
+  }
+  document.getElementById("cal-body").innerHTML=html;
+}
+
+function openCalModal(k,d){
+  modalDate=k;
+  document.getElementById("modal-title").textContent=d+" de "+MESES[calM]+", "+calY;
+  renderModalEvents();
+  document.getElementById("ev-desc").value="";
+  document.getElementById("cal-modal").classList.remove("hidden");
+}
+function renderModalEvents(){
+  const evs=D.events[modalDate]||[];
+  let h="";
+  if(!evs.length)h=`<p class="txt-dim" style="font-size:.83rem;margin-bottom:8px">Sin eventos en este día</p>`;
+  evs.forEach(ev=>{
+    const lbl=ev.tipo==="ensayo"?"Ensayo":ev.tipo==="presentacion"?"Presentación":"Otro";
+    h+=`<div class="ev-item ${ev.tipo}">
+      <div style="flex:1"><span class="ev-tipo">${lbl} ${ev.hora}</span><div class="ev-desc">${ev.desc}</div></div>
+      <button class="del-btn" onclick="delCalEvent(${ev.id})">✕</button>
+    </div>`;
+  });
+  document.getElementById("modal-events").innerHTML=h;
+}
+function addCalEvent(){
+  const desc=document.getElementById("ev-desc").value.trim();
+  if(!desc)return;
+  const ev={id:Date.now(),tipo:document.getElementById("ev-tipo").value,hora:document.getElementById("ev-hora").value,desc};
+  if(!D.events[modalDate])D.events[modalDate]=[];
+  D.events[modalDate].push(ev);
+  save();renderCal();renderModalEvents();
+  document.getElementById("ev-desc").value="";
+}
+function delCalEvent(id){
+  D.events[modalDate]=(D.events[modalDate]||[]).filter(e=>e.id!==id);
+  if(!D.events[modalDate].length)delete D.events[modalDate];
+  save();renderCal();renderModalEvents();
+}
+function closeCalModal(e){
+  if(e.target===e.currentTarget)document.getElementById("cal-modal").classList.add("hidden");
+}
+
+// ════════ BIBLIOTECA ════════
+function renderLib(){
+  let h="";
+  if(!D.blocks.length)h=`<p class="txt-dim" style="font-size:.8rem">Sin bloques todavía</p>`;
+  D.blocks.forEach(b=>{
+    h+=`<div class="block-item${selBlock===b.id?" active":""}" onclick="selectBlock(${b.id})">
+      <span style="font-size:1rem">🎶</span>
+      <div style="flex:1"><div class="b-name">${b.nombre}</div><div class="b-cnt">${b.canciones.length} canción(es)</div></div>
+      <button onclick="event.stopPropagation();deleteBlock(${b.id})" style="background:transparent;border:none;color:var(--txtD);cursor:pointer;padding:0 4px">✕</button>
+    </div>`;
+  });
+  document.getElementById("block-list").innerHTML=h;
+  renderSongs();
+}
+function addBlock(){
+  const v=document.getElementById("nb-input").value.trim();
+  if(!v)return;
+  D.blocks.push({id:Date.now(),nombre:v,canciones:[]});
+  document.getElementById("nb-input").value="";
+  save();renderLib();
+}
+function deleteBlock(id){
+  D.blocks=D.blocks.filter(b=>b.id!==id);
+  if(selBlock===id)selBlock=null;
+  save();renderLib();
+}
+function selectBlock(id){selBlock=id;renderLib();}
+function renderSongs(){
+  const cur=D.blocks.find(b=>b.id===selBlock);
+  if(!cur){
+    document.getElementById("song-panel").innerHTML=`<div class="lib-empty"><span class="big">🎵</span><p>Selecciona un bloque</p></div>`;
+    return;
+  }
+  let h=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <h3 class="gold" style="font-family:Georgia,serif">${cur.nombre}</h3>
+    <button class="btn btn-gold" onclick="toggleSongForm()" id="add-song-btn">+ Agregar canción</button>
+  </div>`;
+  h+=`<div id="song-form-wrap" class="song-form hidden">
+    <div class="form-row">
+      <input class="inp" id="sf-titulo" placeholder="Título *" style="font-size:.82rem">
+      <input class="inp" id="sf-artista" placeholder="Artista / Región" style="font-size:.82rem">
+      <input class="inp" id="sf-dur" placeholder="Duración (3:45)" style="font-size:.82rem">
+      <input class="inp" id="sf-notas" placeholder="Notas / figuras" style="font-size:.82rem">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="addSong()">Guardar</button>
+      <button class="btn btn-ghost" onclick="toggleSongForm()">Cancelar</button>
+    </div>
+  </div>`;
+  if(!cur.canciones.length)h+=`<p class="txt-dim" style="font-size:.83rem">Sin canciones en este bloque</p>`;
+  cur.canciones.forEach((s,i)=>{
+    h+=`<div class="song-item">
+      <div class="song-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="song-title">${s.titulo}</div>
+        <div class="song-meta">${[s.artista,s.dur?`⏱ ${s.dur}`:"",s.notas?`📝 ${s.notas}`:""].filter(Boolean).join("  ")}</div>
+      </div>
+      <button onclick="deleteSong(${cur.id},${s.id})" style="background:transparent;border:none;color:var(--txtD);cursor:pointer;font-size:.9rem;padding:2px 6px">✕</button>
+    </div>`;
+  });
+  document.getElementById("song-panel").innerHTML=h;
+}
+function toggleSongForm(){
+  const f=document.getElementById("song-form-wrap");
+  if(f)f.classList.toggle("hidden");
+}
+function addSong(){
+  const t=document.getElementById("sf-titulo").value.trim();
+  if(!t)return;
+  const s={id:Date.now(),titulo:t,artista:document.getElementById("sf-artista").value.trim(),dur:document.getElementById("sf-dur").value.trim(),notas:document.getElementById("sf-notas").value.trim()};
+  D.blocks=D.blocks.map(b=>b.id===selBlock?{...b,canciones:[...b.canciones,s]}:b);
+  save();renderLib();
+}
+function deleteSong(bid,sid){
+  D.blocks=D.blocks.map(b=>b.id===bid?{...b,canciones:b.canciones.filter(s=>s.id!==sid)}:b);
+  save();renderLib();
+}
+
+// ════════ BAILARINES ════════
+function toggleDanForm(show){
+  const f=document.getElementById("dan-form-wrap");
+  if(show){f.classList.remove("hidden");}else{f.classList.add("hidden");editDancerId=null;}
+}
+function saveDancer(){
+  const nombre=document.getElementById("df-nombre").value.trim();
+  if(!nombre)return;
+  const d={
+    id:editDancerId||Date.now(),
+    nombre,
+    rol:document.getElementById("df-rol").value,
+    telefono:document.getElementById("df-tel").value.trim(),
+    correo:document.getElementById("df-correo").value.trim(),
+    notas:document.getElementById("df-notas").value.trim()
+  };
+  if(editDancerId){D.dancers=D.dancers.map(x=>x.id===editDancerId?d:x);}
+  else D.dancers.push(d);
+  editDancerId=null;
+  ["df-nombre","df-tel","df-correo","df-notas"].forEach(id=>document.getElementById(id).value="");
+  toggleDanForm(false);save();renderDancers();
+}
+function editDancer(id){
+  const d=D.dancers.find(x=>x.id===id);if(!d)return;
+  editDancerId=id;
+  document.getElementById("df-nombre").value=d.nombre;
+  document.getElementById("df-rol").value=d.rol;
+  document.getElementById("df-tel").value=d.telefono||"";
+  document.getElementById("df-correo").value=d.correo||"";
+  document.getElementById("df-notas").value=d.notas||"";
+  document.getElementById("dan-form-title").textContent="Editar integrante";
+  toggleDanForm(true);
+}
+function deleteDancer(id){D.dancers=D.dancers.filter(d=>d.id!==id);save();renderDancers();}
+function renderDancers(){
+  const q=(document.getElementById("dan-search").value||"").toLowerCase();
+  const filt=D.dancers.filter(d=>d.nombre.toLowerCase().includes(q));
+  // Stats
+  let statsH=`<div class="stat-card"><div class="stat-num gold">${D.dancers.length}</div><div class="stat-lbl">Total integrantes</div></div>`;
+  const roles=["bailarín","bailarina","director/a","músico","utilero/a"];
+  roles.forEach(r=>{
+    const cnt=D.dancers.filter(d=>d.rol===r).length;
+    if(!cnt)return;
+    const c=ROLE_COLORS[r]||"#d4af37";
+    statsH+=`<div class="stat-card" style="border-color:${c}33"><div class="stat-num" style="color:${c}">${cnt}</div><div class="stat-lbl">${r.charAt(0).toUpperCase()+r.slice(1)}</div></div>`;
+  });
+  document.getElementById("dan-stats").innerHTML=statsH;
+  // Grid
+  let h="";
+  if(!filt.length)h=`<p class="txt-dim">Sin integrantes registrados.</p>`;
+  filt.forEach(d=>{
+    const c=ROLE_COLORS[d.rol]||"#d4af37";
+    h+=`<div class="dancer-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          {!current && (
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:C.textDim,flexDirection:"column",gap:"10px"}}>
-              <span style={{fontSize:"3rem"}}>🎵</span>
-              <p>Selecciona un bloque para ver sus canciones</p>
-            </div>
-          )}
-          {current && (
-            <>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem"}}>
-                <h3 style={{color:C.gold,margin:0,fontFamily:"Georgia,serif"}}>{current.nombre}</h3>
-                <button onClick={()=>setShowSongForm(v=>!v)} style={btn({background:`linear-gradient(135deg,${C.gold},#b8962e)`,color:"#0a0800"})}>
-                  + Agregar canción
-                </button>
-              </div>
-
-              {showSongForm && (
-                <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",padding:"1.2rem",marginBottom:"1.2rem"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}}>
-                    <input value={newSong.titulo} onChange={e=>setNewSong({...newSong,titulo:e.target.value})}
-                      placeholder="Título de la canción"
-                      style={{padding:"9px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-                    />
-                    <input value={newSong.artista} onChange={e=>setNewSong({...newSong,artista:e.target.value})}
-                      placeholder="Artista / Región"
-                      style={{padding:"9px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-                    />
-                    <input value={newSong.duracion} onChange={e=>setNewSong({...newSong,duracion:e.target.value})}
-                      placeholder="Duración (ej: 3:45)"
-                      style={{padding:"9px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-                    />
-                    <input value={newSong.notas} onChange={e=>setNewSong({...newSong,notas:e.target.value})}
-                      placeholder="Notas / figuras"
-                      style={{padding:"9px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem"}}
-                    />
-                  </div>
-                  <div style={{display:"flex",gap:"8px"}}>
-                    <button onClick={addSong} style={btn({background:`linear-gradient(135deg,${C.gold},#b8962e)`,color:"#0a0800"})}>Guardar</button>
-                    <button onClick={()=>setShowSongForm(false)} style={btn({background:"transparent",border:`1px solid ${C.border}`,color:C.textDim})}>Cancelar</button>
-                  </div>
-                </div>
-              )}
-
-              {current.canciones.length===0 && !showSongForm && (
-                <p style={{color:C.textDim,fontSize:"0.85rem"}}>Sin canciones en este bloque todavía.</p>
-              )}
-
-              <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                {current.canciones.map((s,i)=>(
-                  <div key={s.id} style={{
-                    background:C.card,border:`1px solid ${C.border}`,borderRadius:"10px",
-                    padding:"12px 16px",display:"flex",alignItems:"center",gap:"14px"
-                  }}>
-                    <div style={{
-                      width:"34px",height:"34px",borderRadius:"50%",
-                      background:C.goldFaint,border:`1px solid ${C.gold}44`,
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      color:C.gold,fontWeight:"bold",fontSize:"0.9rem",flexShrink:0
-                    }}>{i+1}</div>
-                    <div style={{flex:1}}>
-                      <div style={{color:C.text,fontWeight:"bold",fontSize:"0.92rem"}}>{s.titulo}</div>
-                      <div style={{color:C.textDim,fontSize:"0.78rem",marginTop:"2px"}}>
-                        {s.artista && <span>{s.artista}</span>}
-                        {s.duracion && <span style={{marginLeft:"10px"}}>⏱ {s.duracion}</span>}
-                        {s.notas && <span style={{marginLeft:"10px",color:C.goldDim}}>📝 {s.notas}</span>}
-                      </div>
-                    </div>
-                    <button onClick={()=>delSong(current.id,s.id)} style={{background:"transparent",border:"none",color:C.textDim,cursor:"pointer",fontSize:"1rem",padding:"4px 8px"}}>✕</button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          <div class="dancer-name">${d.nombre}</div>
+          <span class="rol-badge" style="background:${c}22;color:${c}">${d.rol.toUpperCase()}</span>
+        </div>
+        <div class="dancer-actions">
+          <button onclick="editDancer(${d.id})" title="Editar" style="color:var(--goldD)">✏️</button>
+          <button onclick="deleteDancer(${d.id})" title="Eliminar" style="color:var(--txtD)">✕</button>
         </div>
       </div>
-    </div>
-  );
+      ${d.telefono?`<div class="dancer-info">📞 ${d.telefono}</div>`:""}
+      ${d.correo?`<div class="dancer-info">✉️ ${d.correo}</div>`:""}
+      ${d.notas?`<div class="dancer-info" style="font-style:italic">📝 ${d.notas}</div>`:""}
+    </div>`;
+  });
+  document.getElementById("dancers-grid").innerHTML=h;
 }
 
-// ────────────────────────────────────────────────────────────
-// SECCIÓN: BAILARINES
-// ────────────────────────────────────────────────────────────
-function DancersSection({ data, setData }) {
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({nombre:"",rol:"bailarín",telefono:"",correo:"",notas:""});
-  const [search, setSearch] = useState("");
-
-  const dancers = data.dancers || [];
-
-  const saveForm = () => {
-    if (!form.nombre.trim()) return;
-    if (editId) {
-      setData({...data, dancers:dancers.map(d=>d.id===editId?{...form,id:editId}:d)});
-      setEditId(null);
-    } else {
-      setData({...data, dancers:[...dancers,{...form,id:Date.now(),activo:true}]});
-    }
-    setForm({nombre:"",rol:"bailarín",telefono:"",correo:"",notas:""});
-    setShowForm(false);
-  };
-
-  const startEdit = (d) => {
-    setForm({nombre:d.nombre,rol:d.rol,telefono:d.telefono||"",correo:d.correo||"",notas:d.notas||""});
-    setEditId(d.id);
-    setShowForm(true);
-  };
-
-  const deleteDancer = (id) => {
-    setData({...data, dancers:dancers.filter(d=>d.id!==id)});
-  };
-
-  const filtered = dancers.filter(d=>d.nombre.toLowerCase().includes(search.toLowerCase()));
-
-  const ROLES = ["bailarín","bailarina","director/a","músico","utilero/a"];
-  const ROLE_COLORS = {"bailarín":C.blue,"bailarina":"#e91e8c","director/a":C.gold,"músico":C.green,"utilero/a":C.orange};
-
-  return (
-    <div style={{padding:"2rem", flex:1}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.5rem"}}>
-        <h2 style={{color:C.gold, margin:0, fontFamily:"Georgia,serif", fontSize:"1.6rem"}}>💃 Bailarines</h2>
-        <div style={{display:"flex",gap:"8px"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar..."
-            style={{padding:"9px 14px",borderRadius:"8px",background:C.card,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.85rem",width:"180px"}}
-          />
-          <button onClick={()=>{setShowForm(v=>!v);setEditId(null);setForm({nombre:"",rol:"bailarín",telefono:"",correo:"",notas:"" });}}
-            style={btn({background:`linear-gradient(135deg,${C.gold},#b8962e)`,color:"#0a0800"})}>
-            + Agregar
-          </button>
-        </div>
-      </div>
-
-      {/* Formulario */}
-      {showForm && (
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"14px",padding:"1.5rem",marginBottom:"1.5rem"}}>
-          <h3 style={{color:C.gold,margin:"0 0 1rem",fontSize:"1rem"}}>{editId?"Editar bailarín":"Nuevo integrante"}</h3>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px",marginBottom:"10px"}}>
-            <input value={form.nombre} onChange={e=>setForm({...form,nombre:e.target.value})} placeholder="Nombre completo *"
-              style={{padding:"10px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem"}}
-            />
-            <select value={form.rol} onChange={e=>setForm({...form,rol:e.target.value})}
-              style={{padding:"10px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem"}}>
-              {ROLES.map(r=><option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1)}</option>)}
-            </select>
-            <input value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})} placeholder="Teléfono"
-              style={{padding:"10px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem"}}
-            />
-            <input value={form.correo} onChange={e=>setForm({...form,correo:e.target.value})} placeholder="Correo electrónico"
-              style={{padding:"10px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem"}}
-            />
-            <input value={form.notas} onChange={e=>setForm({...form,notas:e.target.value})} placeholder="Notas / Descripción"
-              style={{padding:"10px 12px",borderRadius:"7px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.88rem",gridColumn:"span 2"}}
-            />
-          </div>
-          <div style={{display:"flex",gap:"8px"}}>
-            <button onClick={saveForm} style={btn({background:`linear-gradient(135deg,${C.gold},#b8962e)`,color:"#0a0800"})}>💾 Guardar</button>
-            <button onClick={()=>{setShowForm(false);setEditId(null);}} style={btn({background:"transparent",border:`1px solid ${C.border}`,color:C.textDim})}>Cancelar</button>
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:"10px",marginBottom:"1.5rem"}}>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"10px",padding:"14px 16px",textAlign:"center"}}>
-          <div style={{color:C.gold,fontSize:"2rem",fontWeight:"bold"}}>{dancers.length}</div>
-          <div style={{color:C.textDim,fontSize:"0.8rem"}}>Total integrantes</div>
-        </div>
-        {Object.entries(ROLE_COLORS).map(([rol,color])=>{
-          const cnt = dancers.filter(d=>d.rol===rol).length;
-          if(!cnt) return null;
-          return (
-            <div key={rol} style={{background:C.card,border:`1px solid ${color}44`,borderRadius:"10px",padding:"14px 16px",textAlign:"center"}}>
-              <div style={{color,fontSize:"2rem",fontWeight:"bold"}}>{cnt}</div>
-              <div style={{color:C.textDim,fontSize:"0.8rem"}}>{rol.charAt(0).toUpperCase()+rol.slice(1)+(cnt>1?"es":"")}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Lista */}
-      {filtered.length===0 && <p style={{color:C.textDim}}>Sin integrantes registrados.</p>}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"12px"}}>
-        {filtered.map(d=>(
-          <div key={d.id} style={{
-            background:C.card,border:`1px solid ${C.border}`,borderRadius:"12px",
-            padding:"16px",display:"flex",flexDirection:"column",gap:"8px"
-          }}>
-            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
-              <div>
-                <div style={{color:C.text,fontWeight:"bold",fontSize:"0.95rem"}}>{d.nombre}</div>
-                <span style={{
-                  fontSize:"0.72rem",padding:"2px 8px",borderRadius:"20px",
-                  background:`${ROLE_COLORS[d.rol]||C.gold}22`,
-                  color:ROLE_COLORS[d.rol]||C.gold,
-                  fontWeight:"bold",letterSpacing:"0.06em"
-                }}>
-                  {d.rol.toUpperCase()}
-                </span>
-              </div>
-              <div style={{display:"flex",gap:"6px"}}>
-                <button onClick={()=>startEdit(d)} style={{background:"transparent",border:"none",color:C.goldDim,cursor:"pointer",fontSize:"0.9rem"}}>✏️</button>
-                <button onClick={()=>deleteDancer(d.id)} style={{background:"transparent",border:"none",color:C.textDim,cursor:"pointer",fontSize:"0.9rem"}}>✕</button>
-              </div>
-            </div>
-            {d.telefono && <div style={{color:C.textDim,fontSize:"0.8rem"}}>📞 {d.telefono}</div>}
-            {d.correo && <div style={{color:C.textDim,fontSize:"0.8rem"}}>✉️ {d.correo}</div>}
-            {d.notas && <div style={{color:C.textDim,fontSize:"0.78rem",fontStyle:"italic"}}>📝 {d.notas}</div>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+// ════════ MENSUALIDADES ════════
+function feeYr(dir){feeY+=dir;renderFee();}
+function feeGkey(did,mi){return `${did}-${feeY}-${mi}`;}
+function feeStatus(did,mi){return D.fees[feeGkey(did,mi)]||"pendiente";}
+function feeToggle(did,mi){
+  const k=feeGkey(did,mi),c=feeStatus(did,mi);
+  const n=c==="pendiente"?"pagado":c==="pagado"?"exonerado":"pendiente";
+  D.fees[k]=n;save();renderFee();
 }
-
-// ────────────────────────────────────────────────────────────
-// SECCIÓN: MENSUALIDADES
-// ────────────────────────────────────────────────────────────
-function FeesSection({ data, setData }) {
-  const hoy = new Date();
-  const [year, setYear] = useState(hoy.getFullYear());
-  const [monto, setMonto] = useState(data.montoMensual || 5000);
-  const [editMonto, setEditMonto] = useState(false);
-  const [tempMonto, setTempMonto] = useState(monto);
-
-  const dancers = (data.dancers || []).filter(d=>["bailarín","bailarina","director/a"].includes(d.rol));
-  const fees = data.fees || {};
-
-  const getKey = (dancerId, mes) => `${dancerId}-${year}-${mes}`;
-  const getStatus = (dancerId, mes) => fees[getKey(dancerId,mes)] || "pendiente";
-
-  const toggle = (dancerId, mes) => {
-    const key = getKey(dancerId,mes);
-    const cur = getStatus(dancerId,mes);
-    const next = cur==="pendiente"?"pagado":cur==="pagado"?"exonerado":"pendiente";
-    setData({...data, fees:{...fees,[key]:next}});
-  };
-
-  const saveMonto = () => {
-    setMonto(tempMonto);
-    setData({...data, montoMensual:tempMonto});
-    setEditMonto(false);
-  };
-
-  const statusColor = s => s==="pagado"?C.green:s==="exonerado"?C.orange:C.red;
-  const statusIcon = s => s==="pagado"?"✅":s==="exonerado"?"⭕":"❌";
-  const statusLabel = s => s==="pagado"?"Pagado":s==="exonerado"?"Exonerado":"Pendiente";
-
-  const totalPaid = dancers.reduce((acc,d)=>
-    acc + MESES.filter((_,i)=>getStatus(d.id,i)==="pagado").length, 0
-  );
-  const totalPossible = dancers.length * 12;
-  const pctPaid = totalPossible>0 ? Math.round(totalPaid/totalPossible*100) : 0;
-  const ingresos = totalPaid * monto;
-
-  return (
-    <div style={{padding:"2rem",flex:1}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.5rem",flexWrap:"wrap",gap:"12px"}}>
-        <h2 style={{color:C.gold,margin:0,fontFamily:"Georgia,serif",fontSize:"1.6rem"}}>💰 Mensualidades {year}</h2>
-        <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-          <button onClick={()=>setYear(y=>y-1)} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold})}>‹ {year-1}</button>
-          <button onClick={()=>setYear(y=>y+1)} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold})}>{year+1} ›</button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:"10px",marginBottom:"1.5rem"}}>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"10px",padding:"16px",textAlign:"center"}}>
-          <div style={{color:C.gold,fontSize:"1.8rem",fontWeight:"bold"}}>{pctPaid}%</div>
-          <div style={{color:C.textDim,fontSize:"0.8rem"}}>Pagos completados</div>
-        </div>
-        <div style={{background:C.card,border:`1px solid ${C.green}44`,borderRadius:"10px",padding:"16px",textAlign:"center"}}>
-          <div style={{color:C.green,fontSize:"1.8rem",fontWeight:"bold"}}>₡{ingresos.toLocaleString()}</div>
-          <div style={{color:C.textDim,fontSize:"0.8rem"}}>Ingresos del año</div>
-        </div>
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:"10px",padding:"16px",display:"flex",alignItems:"center",gap:"10px"}}>
-          {editMonto ? (
-            <div style={{flex:1,display:"flex",gap:"6px",alignItems:"center"}}>
-              <input type="number" value={tempMonto} onChange={e=>setTempMonto(Number(e.target.value))}
-                style={{flex:1,padding:"7px 10px",borderRadius:"6px",background:C.surface,border:`1px solid ${C.border}`,color:C.text,fontSize:"0.9rem",width:"80px"}}
-              />
-              <button onClick={saveMonto} style={btn({background:C.goldFaint,border:`1px solid ${C.border}`,color:C.gold,padding:"7px 10px"})}>✓</button>
-            </div>
-          ) : (
-            <div style={{flex:1,textAlign:"center"}}>
-              <div style={{color:C.gold,fontSize:"1.8rem",fontWeight:"bold"}}>₡{monto.toLocaleString()}</div>
-              <div style={{color:C.textDim,fontSize:"0.8rem"}}>Monto mensual</div>
-            </div>
-          )}
-          <button onClick={()=>{setEditMonto(v=>!v);setTempMonto(monto);}} style={{background:"transparent",border:"none",color:C.goldDim,cursor:"pointer",fontSize:"1rem"}}>✏️</button>
-        </div>
-      </div>
-
-      {/* Leyenda */}
-      <div style={{display:"flex",gap:"1.2rem",marginBottom:"1rem"}}>
-        {[["pagado","Pagado"],["pendiente","Pendiente"],["exonerado","Exonerado"]].map(([s,l])=>(
-          <div key={s} style={{display:"flex",alignItems:"center",gap:"5px"}}>
-            <span>{statusIcon(s)}</span>
-            <span style={{color:C.textDim,fontSize:"0.8rem"}}>{l}</span>
-          </div>
-        ))}
-        <span style={{color:C.textDim,fontSize:"0.78rem",marginLeft:"auto"}}>Click en celda para cambiar estado</span>
-      </div>
-
-      {/* Tabla */}
-      {dancers.length===0 && (
-        <p style={{color:C.textDim}}>Agrega bailarines en la sección de Bailarines para gestionar sus mensualidades.</p>
-      )}
-      {dancers.length>0 && (
-        <div style={{overflowX:"auto"}}>
-          <table style={{borderCollapse:"collapse",width:"100%",minWidth:"700px"}}>
-            <thead>
-              <tr>
-                <th style={{padding:"10px 14px",textAlign:"left",color:C.goldDim,fontSize:"0.78rem",letterSpacing:"0.1em",background:C.card,borderBottom:`1px solid ${C.border}`,position:"sticky",left:0,zIndex:2}}>
-                  BAILARÍN
-                </th>
-                {MESES.map((m,i)=>(
-                  <th key={m} style={{
-                    padding:"8px 4px",textAlign:"center",
-                    color:i===hoy.getMonth()&&year===hoy.getFullYear()?C.gold:C.goldDim,
-                    fontSize:"0.72rem",background:C.card,borderBottom:`1px solid ${C.border}`,
-                    minWidth:"55px",letterSpacing:"0.05em"
-                  }}>{m.slice(0,3).toUpperCase()}</th>
-                ))}
-                <th style={{padding:"10px 14px",textAlign:"center",color:C.goldDim,fontSize:"0.78rem",background:C.card,borderBottom:`1px solid ${C.border}`}}>TOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dancers.map((d,di)=>{
-                const pagados = MESES.filter((_,i)=>getStatus(d.id,i)==="pagado").length;
-                return (
-                  <tr key={d.id} style={{background:di%2===0?C.card:"#141000"}}>
-                    <td style={{
-                      padding:"10px 14px",color:C.text,fontSize:"0.88rem",fontWeight:"bold",
-                      borderBottom:`1px solid ${C.border}22`,position:"sticky",left:0,
-                      background:di%2===0?C.card:"#141000",zIndex:1
-                    }}>{d.nombre}</td>
-                    {MESES.map((_,mi)=>{
-                      const s = getStatus(d.id,mi);
-                      const isCurr = mi===hoy.getMonth()&&year===hoy.getFullYear();
-                      return (
-                        <td key={mi} onClick={()=>toggle(d.id,mi)} style={{
-                          padding:"8px 4px",textAlign:"center",
-                          borderBottom:`1px solid ${C.border}22`,
-                          cursor:"pointer",
-                          background:isCurr?`${statusColor(s)}11`:"transparent",
-                          transition:"all 0.15s"
-                        }}>
-                          <span title={statusLabel(s)} style={{fontSize:"1rem"}}>{statusIcon(s)}</span>
-                        </td>
-                      );
-                    })}
-                    <td style={{padding:"8px 14px",textAlign:"center",borderBottom:`1px solid ${C.border}22`}}>
-                      <span style={{
-                        padding:"3px 10px",borderRadius:"20px",fontSize:"0.8rem",fontWeight:"bold",
-                        background:pagados===12?`${C.green}22`:pagados>6?`${C.orange}22`:`${C.red}22`,
-                        color:pagados===12?C.green:pagados>6?C.orange:C.red
-                      }}>{pagados}/12</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+function sIco(s){return s==="pagado"?"✅":s==="exonerado"?"⭕":"❌";}
+function sClr(s){return s==="pagado"?"var(--green)":s==="exonerado"?"var(--orange)":"var(--red)";}
+function renderFee(){
+  document.getElementById("fee-title").textContent="💰 Mensualidades "+feeY;
+  const dancers=D.dancers.filter(d=>["bailarín","bailarina","director/a"].includes(d.rol));
+  const monto=D.montoMensual||5000;
+  const paid=dancers.reduce((a,d)=>a+MESES.filter((_,i)=>feeStatus(d.id,i)==="pagado").length,0);
+  const tot=dancers.length*12;
+  const pct=tot>0?Math.round(paid/tot*100):0;
+  const hoy2=new Date();
+  // Stats
+  let sh=`<div class="stat-card"><div class="stat-num gold">${pct}%</div><div class="stat-lbl">Pagos completados</div></div>`;
+  sh+=`<div class="stat-card" style="border-color:rgba(76,175,80,.25)"><div class="stat-num" style="color:var(--green)">₡${(paid*monto).toLocaleString()}</div><div class="stat-lbl">Ingresos del año</div></div>`;
+  sh+=`<div class="stat-card">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="flex:1;text-align:center"><div class="stat-num gold">₡${monto.toLocaleString()}</div><div class="stat-lbl">Monto mensual</div></div>
+      <button onclick="editMonto()" style="background:transparent;border:none;color:var(--goldD);cursor:pointer;font-size:.9rem">✏️</button>
     </div>
-  );
+  </div>`;
+  document.getElementById("fee-stats").innerHTML=sh;
+  if(!dancers.length){document.getElementById("fee-table").innerHTML=`<p class="txt-dim">Agrega bailarines (rol: bailarín/a o director/a) para ver mensualidades.</p>`;return;}
+  let th=`<tr><th class="name-col">BAILARÍN</th>`;
+  MESES.forEach((m,i)=>{
+    const isCur=i===hoy2.getMonth()&&feeY===hoy2.getFullYear();
+    th+=`<th style="${isCur?"color:var(--gold)":""}">${m.slice(0,3).toUpperCase()}</th>`;
+  });
+  th+=`<th>TOTAL</th></tr>`;
+  let tb="";
+  dancers.forEach((d,di)=>{
+    const pag=MESES.filter((_,i)=>feeStatus(d.id,i)==="pagado").length;
+    const bg=di%2===0?"var(--card)":"#141002";
+    let row=`<tr style="background:${bg}"><td class="name-cell" style="background:${bg}">${d.nombre}</td>`;
+    MESES.forEach((_,mi)=>{
+      const s=feeStatus(d.id,mi);
+      const isCur=mi===hoy2.getMonth()&&feeY===hoy2.getFullYear();
+      row+=`<td class="fee-cell" style="${isCur?`background:${sClr(s)}0e`:""}" onclick="feeToggle(${d.id},${mi})" title="${s}">${sIco(s)}</td>`;
+    });
+    const bc=pag===12?"rgba(76,175,80,.2)":pag>6?"rgba(255,152,0,.2)":"rgba(229,57,53,.2)";
+    const tc=pag===12?"var(--green)":pag>6?"var(--orange)":"var(--red)";
+    row+=`<td><span class="total-badge" style="background:${bc};color:${tc}">${pag}/12</span></td></tr>`;
+    tb+=row;
+  });
+  document.getElementById("fee-table").innerHTML=`<table><thead>${th}</thead><tbody>${tb}</tbody></table>`;
 }
-
-// ────────────────────────────────────────────────────────────
-// APP PRINCIPAL
-// ────────────────────────────────────────────────────────────
-const DEFAULT_DATA = {
-  events: {},
-  blocks: [],
-  dancers: [],
-  fees: {},
-  montoMensual: 5000
-};
-
-export default function App() {
-  const [logged, setLogged] = useState(false);
-  const [active, setActive] = useState("calendar");
-  const [data, setDataRaw] = useState(DEFAULT_DATA);
-
-  // Persistencia con window.storage
-  useEffect(()=>{
-    (async()=>{
-      try {
-        const r = await window.storage.get("ca_data");
-        if(r && r.value) setDataRaw(JSON.parse(r.value));
-      } catch(e) {}
-    })();
-  },[]);
-
-  const setData = async (newData) => {
-    setDataRaw(newData);
-    try { await window.storage.set("ca_data", JSON.stringify(newData)); } catch(e){}
-  };
-
-  if (!logged) return <Login onLogin={()=>setLogged(true)}/>;
-
-  return (
-    <div style={{display:"flex", minHeight:"100vh", background:C.bg, fontFamily:"system-ui,sans-serif", color:C.text}}>
-      <Sidebar active={active} setActive={setActive} onLogout={()=>setLogged(false)}/>
-      <main style={{flex:1, overflowY:"auto", maxHeight:"100vh"}}>
-        {active==="calendar" && <CalendarSection data={data} setData={setData}/>}
-        {active==="library" && <LibrarySection data={data} setData={setData}/>}
-        {active==="dancers" && <DancersSection data={data} setData={setData}/>}
-        {active==="fees" && <FeesSection data={data} setData={setData}/>}
-      </main>
-    </div>
-  );
+function editMonto(){
+  const v=prompt("Monto mensual (₡):",D.montoMensual||5000);
+  if(v!==null&&!isNaN(Number(v))&&Number(v)>0){D.montoMensual=Number(v);save();renderFee();}
 }
+</script>
+</body>
+</html>
