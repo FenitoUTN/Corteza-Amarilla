@@ -1,0 +1,23 @@
+.lib-wrap{display:grid;grid-template-columns:230px 1fr;gap:1.2rem}
+.block-item{
+  padding:9px 12px;border-radius:8px;margin-bottom:5px;
+  background:var(--card);border:1px solid var(--brd);
+  cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;
+}
+.block-item.active{background:var(--goldF);border-color:rgba(212,175,55,.3);color:var(--gold)}
+.block-item .b-name{font-weight:700;font-size:.85rem}
+.block-item .b-cnt{color:var(--txtD);font-size:.72rem}
+.song-item{
+  background:var(--card);border:1px solid var(--brd);border-radius:9px;
+  padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:7px;
+}
+.song-num{
+  width:30px;height:30px;border-radius:50%;background:var(--goldF);
+  border:1px solid rgba(212,175,55,.25);display:flex;align-items:center;justify-content:center;
+  color:var(--gold);font-weight:700;font-size:.85rem;flex-shrink:0;
+}
+.song-title{color:var(--txt);font-weight:700;font-size:.9rem}
+.song-meta{color:var(--txtD);font-size:.75rem;margin-top:2px}
+.lib-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;color:var(--txtD);gap:8px}
+.lib-empty .big{font-size:2.5rem}
+.song-form{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:1.1rem;margin-bottom:1rem}

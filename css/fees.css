@@ -1,0 +1,10 @@
+.fee-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.2rem}
+.fee-table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{padding:9px 5px;text-align:center;color:var(--goldD);font-size:.68rem;letter-spacing:.08em;background:var(--card);border-bottom:1px solid var(--brd)}
+th.name-col{padding:9px 12px;text-align:left;position:sticky;left:0;z-index:2}
+td{padding:8px 3px;text-align:center;border-bottom:1px solid rgba(212,175,55,.08)}
+td.name-cell{padding:9px 12px;color:var(--txt);font-weight:700;font-size:.85rem;text-align:left;position:sticky;left:0;z-index:1}
+.fee-cell{cursor:pointer;font-size:.9rem;transition:background .12s;border-radius:4px}
+.fee-cell:hover{background:rgba(212,175,55,.08)}
+.total-badge{padding:3px 9px;border-radius:20px;font-size:.75rem;font-weight:700}

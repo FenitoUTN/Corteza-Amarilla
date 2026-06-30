@@ -1,0 +1,23 @@
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{
+  width:190px;min-height:100%;background:var(--sur);border-right:1px solid var(--brd);
+  display:flex;flex-direction:column;flex-shrink:0;
+}
+.sidebar-head{padding:1.2rem 1rem;border-bottom:1px solid var(--brd);display:flex;flex-direction:column;align-items:center;gap:8px}
+.sidebar-head .name{color:var(--gold);font-weight:700;font-size:.9rem;font-family:Georgia,serif;text-align:center}
+.sidebar-head .sub2{color:var(--goldD);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase}
+nav{flex:1;padding:10px 8px}
+.nav-btn{
+  width:100%;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px;
+  background:transparent;border:1px solid transparent;color:var(--txtD);
+  font-size:.85rem;font-weight:400;margin-bottom:3px;text-align:left;transition:all .15s;cursor:pointer;
+}
+.nav-btn.active{background:var(--goldF);border-color:rgba(212,175,55,.25);color:var(--gold);font-weight:700}
+.sidebar-foot{padding:10px 8px;border-top:1px solid var(--brd)}
+#content{flex:1;overflow-y:auto}
+.section{padding:1.5rem;display:none}
+.section.active{display:block}
+.sec-title{color:var(--gold);font-family:Georgia,serif;font-size:1.45rem;margin-bottom:1.2rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.form-label{color:var(--goldD);font-size:.73rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.btn-row{display:flex;gap:7px}

@@ -1,0 +1,17 @@
+#login-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 35%,#201500 0%,#080601 65%);
+}
+.login-box{
+  width:320px;padding:2.2rem 1.8rem;background:var(--sur);border-radius:20px;
+  border:1px solid rgba(212,175,55,.25);box-shadow:0 0 80px rgba(212,175,55,.1);
+  display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+}
+.login-box h1{color:var(--gold);font-size:1.55rem;font-family:Georgia,serif;letter-spacing:.04em;text-align:center}
+.login-box p.sub{color:var(--goldD);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;text-align:center}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent)}
+.login-box label{color:var(--goldD);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px}
+#login-err{color:var(--red);font-size:.78rem;margin-top:5px;min-height:18px}
+
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 14px rgba(212,175,55,.5))}50%{filter:drop-shadow(0 0 28px rgba(212,175,55,.85))}}
+.mandala-anim{animation:glow 3s ease-in-out infinite}
