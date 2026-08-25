@@ -51,13 +51,13 @@ function renderDancers() {
   if (!filt.length) h = `<p class="txt-dim">Sin integrantes registrados.</p>`;
   filt.forEach(d => {
     const c = ROLE_COLORS[d.rol] || "#d4af37";
-    h += `<div class="dancer-card">
+    h += `<div class="dancer-card" onclick="openDancerProfile(${d.id})" style="cursor:pointer">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div class="dancer-name">${d.nombre}</div>
           <span class="rol-badge" style="background:${c}22;color:${c}">${d.rol.toUpperCase()}</span>
         </div>
-        <div class="dancer-actions">
+        <div class="dancer-actions" onclick="event.stopPropagation()">
           <button onclick="editDancer(${d.id})" title="Editar" style="color:var(--goldD)">✏️</button>
           <button onclick="deleteDancer(${d.id})" title="Eliminar" style="color:var(--txtD)">✕</button>
         </div>
@@ -68,4 +68,56 @@ function renderDancers() {
     </div>`;
   });
   document.getElementById("dancers-grid").innerHTML = h;
+}
+
+let activeProfileId = null;
+
+function openDancerProfile(id) {
+  const d = D.dancers.find(x => x.id === id); if (!d) return;
+  activeProfileId = id;
+  document.getElementById("dancer-modal-name").textContent = d.nombre;
+  const c = ROLE_COLORS[d.rol] || "#d4af37";
+  document.getElementById("dancer-modal-role").innerHTML = `<span class="rol-badge" style="background:${c}22;color:${c}">${d.rol.toUpperCase()}</span>`;
+  document.getElementById("dancer-modal").classList.remove("hidden");
+  renderWardrobeList();
+}
+
+function closeDancerModal(e) {
+  if (e && e.target.id !== "dancer-modal") return;
+  document.getElementById("dancer-modal").classList.add("hidden");
+  activeProfileId = null;
+}
+
+function renderWardrobeList() {
+  if (!activeProfileId) return;
+  const items = getWardrobeForDancer(activeProfileId);
+  let h = "";
+  if (!items.length) {
+    h = `<p class="txt-dim" style="font-size:0.8rem">No tiene vestuario asignado.</p>`;
+  } else {
+    items.forEach(item => {
+      const isGroup = item.isGroupProperty === "grupo";
+      const badgeClass = isGroup ? "w-badge-grupo" : "w-badge-personal";
+      const badgeText = isGroup ? "Propiedad del Grupo" : "Propiedad Personal";
+      h += `
+        <div class="wardrobe-item">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.9rem">${item.name}</span>
+            <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 0.7rem; border-color:var(--red); color:var(--red);" onclick="removeWardrobeItem('${item.id}'); renderWardrobeList()">Quitar</button>
+          </div>
+          <span class="w-badge ${badgeClass}">${badgeText}</span>
+        </div>
+      `;
+    });
+  }
+  document.getElementById("wardrobe-list").innerHTML = h;
+}
+
+function handleAddWardrobe() {
+  if (!activeProfileId) return;
+  const nameInput = document.getElementById("w-name");
+  const propSelect = document.getElementById("w-prop");
+  addWardrobeItem(activeProfileId, nameInput.value, propSelect.value);
+  nameInput.value = "";
+  renderWardrobeList();
 }

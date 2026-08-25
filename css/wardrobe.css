@@ -1,0 +1,22 @@
+.wardrobe-item {
+    background-color: var(--sur);
+    border: 1px solid var(--brd);
+    border-radius: 8px;
+    padding: 10px;
+}
+.w-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    margin-top: 6px;
+}
+.w-badge-grupo {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: var(--green);
+}
+.w-badge-personal {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: var(--orange);
+}

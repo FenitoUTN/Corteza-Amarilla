@@ -10,53 +10,31 @@
 <link rel="stylesheet" href="css/calendar.css">
 <link rel="stylesheet" href="css/library.css">
 <link rel="stylesheet" href="css/dancers.css">
+<link rel="stylesheet" href="css/wardrobe.css">
 <link rel="stylesheet" href="css/fees.css">
 </head>
 <body>
 
 <!-- ════════════════ LOGIN ════════════════ -->
 <div id="login-screen">
-  <div class="login-box">
-    <svg class="mandala-anim" viewBox="0 0 100 100" width="120" height="120">
-      <circle cx="50" cy="50" r="45" fill="#1a1200" stroke="#d4af37" stroke-width="0.8" opacity="0.9"/>
-      <circle cx="50" cy="50" r="32" fill="none" stroke="#d4af37" stroke-width="0.6"/>
-      <circle cx="50" cy="50" r="18" fill="rgba(212,175,55,.13)" stroke="#d4af37" stroke-width="1"/>
-      <circle cx="50" cy="50" r="8" fill="#d4af37" stroke="#1a1200" stroke-width="1"/>
-      <line x1="50" y1="32" x2="50" y2="18" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="50" y1="68" x2="50" y2="82" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="32" y1="50" x2="18" y2="50" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="68" y1="50" x2="82" y2="50" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="61.3" y1="38.7" x2="72.7" y2="27.3" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="38.7" y1="61.3" x2="27.3" y2="72.7" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="61.3" y1="61.3" x2="72.7" y2="72.7" stroke="#d4af37" stroke-width="1.2"/>
-      <line x1="38.7" y1="38.7" x2="27.3" y2="27.3" stroke="#d4af37" stroke-width="1.2"/>
-      <circle cx="50" cy="18" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="50" cy="82" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="18" cy="50" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="82" cy="50" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="27.3" cy="27.3" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="72.7" cy="72.7" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="27.3" cy="72.7" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="72.7" cy="27.3" r="4" fill="#ffd700" opacity="0.9"/>
-      <circle cx="50" cy="32" r="3.5" fill="#4caf50" opacity="0.9"/>
-      <circle cx="50" cy="68" r="3.5" fill="#ff9800" opacity="0.9"/>
-      <circle cx="32" cy="50" r="3.5" fill="#d4af37" opacity="0.9"/>
-      <circle cx="68" cy="50" r="3.5" fill="#5c6bc0" opacity="0.9"/>
-      <circle cx="61.3" cy="38.7" r="3.5" fill="#4caf50" opacity="0.9"/>
-      <circle cx="38.7" cy="61.3" r="3.5" fill="#ff9800" opacity="0.9"/>
-      <circle cx="61.3" cy="61.3" r="3.5" fill="#d4af37" opacity="0.9"/>
-      <circle cx="38.7" cy="38.7" r="3.5" fill="#5c6bc0" opacity="0.9"/>
-    </svg>
-    <h1>Corteza Amarilla</h1>
-    <p class="sub">Grupo de Folclor</p>
-    <div class="divider"></div>
-    <div style="width:100%">
-      <label>Contraseña</label>
-      <input class="inp" type="password" id="pw-input" placeholder="••••••••" style="font-size:1rem;padding:11px 14px">
-      <p id="login-err"></p>
+  <div class="login-container">
+    <div class="login-image-col">
+      <img src="img/Corteza.jpg" alt="Logo Corteza Amarilla" class="login-logo-img">
     </div>
-    <button class="btn btn-gold" style="width:100%;padding:12px" onclick="doLogin()">Ingresar</button>
-    <p class="txt-dim" style="font-size:.7rem;text-align:center">Contraseña: corteza2024</p>
+    <div class="login-form-col">
+      <div class="login-box">
+        <h1>Corteza Amarilla</h1>
+        <p class="sub">Grupo de Folclor</p>
+        <div class="divider"></div>
+        <div style="width:100%">
+          <label>Contraseña</label>
+          <input class="inp" type="password" id="pw-input" placeholder="••••••••" style="font-size:1rem;padding:11px 14px" onkeydown="if(event.key==='Enter')doLogin()">
+          <p id="login-err"></p>
+        </div>
+        <button class="btn btn-gold" style="width:100%;padding:12px" onclick="doLogin()">Ingresar</button>
+        <p class="txt-dim" style="font-size:.7rem;text-align:center">Contraseña: corteza2024</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -186,6 +164,34 @@
   </div><!-- /content -->
 </div><!-- /app -->
 
+<!-- ════════════════ MODAL PERFIL BAILARÍN ════════════════ -->
+<div id="dancer-modal" class="modal-bg hidden" onclick="closeDancerModal(event)">
+  <div class="modal-box" style="max-width: 500px;">
+    <h3 id="dancer-modal-name">Nombre</h3>
+    <p class="sub2" id="dancer-modal-role" style="margin-bottom: 15px;">Rol</p>
+    
+    <div class="modal-divider"></div>
+    <h4 style="color:var(--gold); margin-bottom:10px;">Vestuario Asignado</h4>
+    
+    <div id="wardrobe-list" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+      <!-- Wardrobe items will be injected here -->
+    </div>
+    
+    <div class="form-row" style="margin-bottom: 10px;">
+      <input class="inp" id="w-name" placeholder="Nueva prenda...">
+      <select class="inp" id="w-prop">
+        <option value="grupo">Propiedad del Grupo</option>
+        <option value="personal">Propiedad Personal</option>
+      </select>
+    </div>
+    <button class="btn btn-gold btn-sm" style="width:100%; margin-bottom: 15px;" onclick="handleAddWardrobe()">+ Asignar Prenda</button>
+    
+    <div class="btn-row">
+      <button class="btn btn-ghost" style="width:100%" onclick="document.getElementById('dancer-modal').classList.add('hidden')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ MODAL CALENDARIO ════════════════ -->
 <div id="cal-modal" class="modal-bg hidden" onclick="closeCalModal(event)">
   <div class="modal-box">
@@ -215,6 +221,7 @@
 <script src="js/calendar.js"></script>
 <script src="js/library.js"></script>
 <script src="js/dancers.js"></script>
+<script src="js/wardrobe.js"></script>
 <script src="js/fees.js"></script>
 <script src="js/main.js"></script>
 </body>

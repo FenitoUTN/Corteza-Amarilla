@@ -1,11 +1,50 @@
 #login-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   background:radial-gradient(ellipse at 50% 35%,#201500 0%,#080601 65%);
+  padding: 20px;
+}
+.login-container {
+  display: flex;
+  flex-direction: row;
+  max-width: 850px;
+  width: 100%;
+  background: var(--sur);
+  border-radius: 20px;
+  border: 1px solid rgba(212,175,55,.25);
+  box-shadow: 0 0 80px rgba(212,175,55,.1);
+  overflow: hidden;
+}
+.login-image-col {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  border-right: 1px solid rgba(212,175,55,.2);
+}
+.login-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-height: 500px;
+}
+.login-form-col {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
 }
 .login-box{
-  width:320px;padding:2.2rem 1.8rem;background:var(--sur);border-radius:20px;
-  border:1px solid rgba(212,175,55,.25);box-shadow:0 0 80px rgba(212,175,55,.1);
-  display:flex;flex-direction:column;align-items:center;gap:1.2rem;
+  width:100%;
+  max-width: 320px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1.2rem;
 }
 .login-box h1{color:var(--gold);font-size:1.55rem;font-family:Georgia,serif;letter-spacing:.04em;text-align:center}
 .login-box p.sub{color:var(--goldD);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;text-align:center}
@@ -13,5 +52,18 @@
 .login-box label{color:var(--goldD);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px}
 #login-err{color:var(--red);font-size:.78rem;margin-top:5px;min-height:18px}
 
-@keyframes glow{0%,100%{filter:drop-shadow(0 0 14px rgba(212,175,55,.5))}50%{filter:drop-shadow(0 0 28px rgba(212,175,55,.85))}}
-.mandala-anim{animation:glow 3s ease-in-out infinite}
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .login-image-col {
+    border-right: none;
+    border-bottom: 1px solid rgba(212,175,55,.2);
+  }
+  .login-logo-img {
+    max-height: 250px;
+  }
+  .login-form-col {
+    padding: 2rem 1.5rem;
+  }
+}

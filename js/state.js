@@ -2,7 +2,7 @@ const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto"
 const PASS = "corteza2024";
 const ROLE_COLORS = {"bailarín":"#42a5f5","bailarina":"#e91e8c","director/a":"#d4af37","músico":"#4caf50","utilero/a":"#ff9800"};
 
-let D = {events:{}, blocks:[], dancers:[], fees:{}, montoMensual:5000};
+let D = {events:{}, blocks:[], dancers:[], fees:{}, wardrobe:[], montoMensual:5000};
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 let feeY = new Date().getFullYear();
 let selBlock = null, editDancerId = null, modalDate = null;
